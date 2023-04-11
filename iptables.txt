@@ -2,6 +2,7 @@ sudo firewall-cmd --list-all > Desktop/firewalld.txt
 sudo systemctl disable firewalld
 sudo systenctl stop firewalld
 sudo iptables -F
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 sudo iptables -A INPUT -i lo -p all -j ACCEPT
 sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A INPUT -s 224.0.0.0/4 -j DROP
