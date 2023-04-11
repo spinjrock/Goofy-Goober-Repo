@@ -1,0 +1,48 @@
+sudo firewall-cmd --list-all > Desktop/firewalld.txt
+sudo systemctl disable firewalld
+sudo systenctl stop firewalld
+sudo iptables -F
+sudo iptables -A INPUT -i lo -p all -j ACCEPT
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A INPUT -s 224.0.0.0/4 -j DROP
+sudo iptables -A INPUT -d 224.0.0.0/4 -j DROP
+sudo iptables -A INPUT -s 224.0.0.0/5 -j DROP
+sudo iptables -A INPUT -d 224.0.0.0/5 -j DROP
+sudo iptables -A INPUT -s 0.0.0.0/8 -j DROP
+sudo iptables -A INPUT -d 0.0.0.0/8 -j DROP
+sudo iptables -A INPUT -d 239.255.255.0/24 -j DROP
+sudo iptables -A INPUT -d 255.255.255.255 -j DROP
+sudo iptables -A INPUT -p icmp --icmp-type echo-request -j LOG --log-prefix "ICMP Attempt: " --log-level 4
+sudo iptables -A INPUT -p icmp --icmp-type echo-request -j Reject
+sudo iptables -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j LOG --log-prefix "Address-Mask Drop: " --log-level 4
+sudo iptables -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j DROP
+sudo iptables -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j LOG --log-prefix "Timestamp Drop: " --log-level 4
+sudo iptables -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j DROP
+sudo iptables -A INPUT -p icmp -m limit --limit 1/second -j ACCEPT
+sudo iptables -A FORWARD -m state --state INVALID -j LOG --log-prefix "Forward Invalid Drop: " --log-level 4
+sudo iptables -A FORWARD -m state --state INVALID -j DROP
+sudo iptables -A OUTPUT -m state --state INVALID -j LOG --log-prefix "OUTPUT Invalid Drop: " --log-level 4
+sudo iptables -A OUTPUT -m state --state INVALID -j DROP
+sudo iptables -A INPUT -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/second --limit-burst 2 -j ACCEPT
+sudo iptables -A INPUT -p tcp -m tcp --dport 139 -m recent --name portscan --set -j LOG --log-prefix "portscan:" --log-level 4
+sudo iptables -A INPUT -p tcp -m tcp --dport 139 -m recent --name portscan --set -j DROP
+sudo iptables -A FORWARD -p tcp -m tcp --dport 139 -m recent --name portscan --set -j LOG --log-prefix "portscan:" --log-level 4
+sudo iptables -A FORWARD -p tcp -m tcp --dport 139 -m recent --name portscan --set -j DROP
+sudo iptables -A INPUT -m recent --name portscan --rcheck --seconds 86400 -j DROP
+sudo iptables -A FORWARD -m recent --name portscan --rcheck --seconds 86400 -j DROP
+sudo iptables -A INPUT -m recent --name portscan --remove
+sudo iptables -A FORWARD -m recent --name portscan --remove
+sudo iptables -A INPUT -p tcp -m tcp --dport 22 -m recent --name sshattempt --set -j LOG --log-prefix "SSH ATTEMPT: " --log-level 4
+sudo iptables -A INPUT -p tcp -m tcp --dport 22 -m recent --name sshattempt --set -j REJECT --reject-with tcp-reset
+sudo iptables -A INPUT -p tcp -m recent --name sshattempt --rcheck --seconds 86400 -j DROP
+sudo iptables -A INPUT -p udp -m udp --dport 53 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+#UNCOMMENT HERE TO BLOCK ALL
+#sudo iptables -A INPUT -j REJECT
+#sudo iptables -A OUTPUT -j ACCEPT
+#sudo iptables -A FORWARD -j REJECT
+#sudo ip6tables -A INPUT -j DROP
+sudo iptables-save 
+sudo ip6tables-save
+sudo iptables -S
+sudo ip6tables -S
